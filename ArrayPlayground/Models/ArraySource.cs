@@ -22,10 +22,7 @@ namespace ArrayPlayground.Models
         private ArraySource()
         {
             Randomizer = new Random();
-            foreach (var item in Enumerable.Range(0, 2000))
-            {
-                Items.Add(new ArrayItem(item));
-            }
+            Items = new ObservableCollection<ArrayItem>(Enumerable.Range(1, 3).Select(x => new ArrayItem(x)));
         }
 
         private ObservableCollection<ArrayItem> _items = new ObservableCollection<ArrayItem>();

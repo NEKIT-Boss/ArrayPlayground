@@ -10,6 +10,11 @@ namespace ArrayPlayground.Models
     {
         public int Value { get; set; }
 
+        public ArrayItem()
+        {
+            Value = 0;
+        }
+
         public ArrayItem(int value)
         {
             Value = value;

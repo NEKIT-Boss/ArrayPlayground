@@ -12,11 +12,6 @@ namespace ArrayPlayground.ViewModels
 {
     public class MainPageViewModel : ViewModelBase
     {
-        public MainPageViewModel()
-        {
-            
-        }
-
         private ObservableCollection<ArrayItem> _items = ArraySource.Instance.Items;
         public ObservableCollection<ArrayItem> Items
         {
@@ -31,10 +26,50 @@ namespace ArrayPlayground.ViewModels
             }
         }
 
+        private int _selectedIndex = -1;
+        public int SelectedIndex
+        {
+            get
+            {
+                return _selectedIndex;
+            }
+
+            set
+            {
+                Set(ref _selectedIndex, value);
+            }
+        }
+
+        public MainPageViewModel()
+        {
+            
+        }
+
         public void Shuffle()
         {
             ArraySource.Instance.Shuffle();
             Items = ArraySource.Instance.Items;
+        }
+
+        public void Nexty()
+        {
+            if (SelectedIndex != (Items.Count - 1) )
+            {
+                SelectedIndex++;
+            }
+
+            else
+            {
+                Items.Add(new ArrayItem());
+            }
+        }
+
+        public void Prevy()
+        {
+            if (SelectedIndex != 0)
+            {
+                SelectedIndex--;
+            }
         }
 
         public override async Task OnNavigatedToAsync(object parameter, NavigationMode mode, IDictionary<string, object> suspensionState)
