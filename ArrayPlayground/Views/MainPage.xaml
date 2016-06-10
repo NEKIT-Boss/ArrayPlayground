@@ -19,8 +19,8 @@
     <Page.Resources>
         <converters:StringFormatConverter x:Key="SummaryConverter"/>
     </Page.Resources>
-    
-    <RelativePanel Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" VerticalAlignment="Stretch">
+
+    <RelativePanel Background="{StaticResource ContentBackground}" >
         <!--<VisualStateManager.VisualStateGroups>
             <VisualStateGroup x:Name="AdaptiveVisualStateGroup">
                 <VisualState x:Name="VisualStateNarrow">
@@ -72,13 +72,20 @@
                 </DataTemplate>
             </Pivot.HeaderTemplate>
 
-            <PivotItem Header="Ввод данных" Margin="0" Background="#FFE5E5E5" >
+            <Pivot.Resources>
+                <Style TargetType="PivotItem">
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="Background" Value="{StaticResource ContentBackground}"/>
+                </Style>
+            </Pivot.Resources>
+
+            <PivotItem Header="Ввод данных">
                 <RelativePanel>
                     <Rectangle x:Name="InputBelt" 
                                RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignTopWithPanel="True"
                                Style="{StaticResource AppHeaderBeltRectangleStyle}"
-                               StrokeThickness="0"/>
-                    <ScrollViewer Padding="10 30" VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Visible"
+                               />
+                    <ScrollViewer Margin="10 5" VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Visible"
                                   RelativePanel.Below="InputBelt" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignBottomWithPanel="True">
                         <RelativePanel>
                             <TextBlock x:Name="ArrayTitle"
@@ -132,23 +139,30 @@
                                 </StackPanel>
                             </Button>
 
-                            <VariableSizedWrapGrid RelativePanel.Below="AddingItems" Orientation="Horizontal" RelativePanel.AlignHorizontalCenterWithPanel="True">
+                            <VariableSizedWrapGrid RelativePanel.Below="AddingItems" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" Orientation="Horizontal" ItemHeight="{Binding ActualHeight, ElementName=AddingColumn, Mode=OneTime}" Margin="0 40 0 0">
                                 <StackPanel Style="{StaticResource ButtonsStackStyle}">
                                     <StackPanel.Resources>
-                                        <Style  TargetType="Button" BasedOn="{StaticResource HubButtonStyle}"/>
+                                        <Style  TargetType="TextBlock" BasedOn="{StaticResource SummaryTextBlockStyle}"/>
                                     </StackPanel.Resources>
 
                                     <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
                                         Заполнено
                                     </ListViewHeaderItem>
 
-                                    <TextBlock Text="{x:Bind ViewModel.Items.Count, Mode=OneWay, Converter={StaticResource SummaryConverter}, ConverterParameter=Заполнено: \{0\}}"/>
-                                    <Button Content="В начало"/>
-                                    <Button Content="Перед выбранным"/>
-                                    <Button Content="После выбранного"/>
+                                    <TextBlock Text="{x:Bind ViewModel.Items.Count, Mode=OneWay, Converter={StaticResource SummaryConverter}, ConverterParameter=Заполнено элементов: \{0\}}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.SelectedIndex, Mode=OneWay, Converter={StaticResource SummaryConverter}, ConverterParameter=Выбранный элемент: \{0\}}"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Отсортированы: "/>
+                                        <SymbolIcon Symbol="Accept" VerticalAlignment="Top" Foreground="Green" Margin="10 0 0 0">
+                                            <SymbolIcon.RenderTransform>
+                                                <ScaleTransform ScaleX="1.1" ScaleY="1.1"/>
+
+                                            </SymbolIcon.RenderTransform>
+                                        </SymbolIcon>
+                                    </StackPanel>
                                 </StackPanel>
 
-                                <StackPanel Style="{StaticResource ButtonsStackStyle}">
+                                <StackPanel x:Name="AddingColumn" Style="{StaticResource ButtonsStackStyle}">
                                     <StackPanel.Resources>
                                         <Style  TargetType="Button" BasedOn="{StaticResource HubButtonStyle}"/>
                                     </StackPanel.Resources>
@@ -189,16 +203,14 @@
                                     <Button Content="Из файла..."/>
                                     <Button Content="Случайно..."/>
                                 </StackPanel>
-
-
                             </VariableSizedWrapGrid>
                         </RelativePanel>
                     </ScrollViewer>
                 </RelativePanel>
             </PivotItem>
 
-            <PivotItem Header="Поиск">
-
+            <PivotItem Header="Поиск" VerticalContentAlignment="Stretch">
+                
             </PivotItem>
 
             <PivotItem Header="Построить дерево">

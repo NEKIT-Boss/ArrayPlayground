@@ -26,7 +26,7 @@ namespace ArrayPlayground.ViewModels
             }
         }
 
-        private int _selectedIndex = -1;
+        private int _selectedIndex = 0;
         public int SelectedIndex
         {
             get
@@ -40,10 +40,63 @@ namespace ArrayPlayground.ViewModels
             }
         }
 
+        private bool _isSorted = false;
+        public bool IsSorted
+        {
+            get
+            {
+                return _isSorted;
+            }
+
+            set
+            {
+                Set(ref _isSorted, value);
+            }
+        }
+
+        #region SelectionManipulation
+        private int PrevSelected { get; set; }
+        private void PushSelected()
+        {
+            PrevSelected = SelectedIndex;
+            SelectedIndex = -1;
+        }
+        private void PopSelected()
+        {
+            SelectedIndex = PrevSelected;
+            PrevSelected = -1;
+        }
+
+        private void DoSafeSelected(Action DoSet)
+        {
+            PushSelected();
+            DoSet?.Invoke();
+            PopSelected();
+        }
+        #endregion
+
         public MainPageViewModel()
         {
-            
+            PrevSelected = -1;    
         }
+
+        #region Adding
+        public void AddBack()
+        {
+            DoSafeSelected( delegate
+            {
+                Items.Add(new ArrayItem());
+            });
+        }
+
+        public void AddFront()
+        {
+            DoSafeSelected(delegate
+            {
+                Items.Insert(0, new ArrayItem());
+            });
+        }
+        #endregion
 
         public void Shuffle()
         {
