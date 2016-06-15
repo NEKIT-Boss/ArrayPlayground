@@ -1,0 +1,21 @@
+﻿<ContentDialog
+    x:Class="ArrayPlayground.Views.FillRandomDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ArrayPlayground.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Зполнить случайно ..."
+    PrimaryButtonText="Заполнить"
+    SecondaryButtonText="Отмена"
+    PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
+    SecondaryButtonClick="ContentDialog_SecondaryButtonClick">
+
+    <StackPanel Margin="10 20">
+        <TextBox x:Name="ElementsRequiredTextBox" MaxLength="5" InputScope="Digits"
+                 Header="Количество элементов"/>
+        <ToggleSwitch x:Name="UniqueOnlySwitch" OnContent="Только уникальные" OffContent="С повторениями"/>
+        <ToggleSwitch x:Name="SortedSwitch" OnContent="Упорядочено" OffContent="Неупорядочено"/>
+    </StackPanel>
+</ContentDialog>

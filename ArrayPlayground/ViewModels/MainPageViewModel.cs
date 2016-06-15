@@ -40,6 +40,14 @@ namespace ArrayPlayground.ViewModels
             }
         }
 
+        public int LastIndex
+        {
+            get
+            {
+                return Items.Count - 1;
+            }
+        }
+
         private bool _isSorted = false;
         public bool IsSorted
         {
@@ -54,6 +62,16 @@ namespace ArrayPlayground.ViewModels
             }
         }
 
+        public MainPageViewModel()
+        {
+            PrevSelected = -1;
+            Items.CollectionChanged += delegate
+            {
+                RemoveAllCommand.RaiseCanExecuteChanged();
+                RemoveSelectedCommand.RaiseCanExecuteChanged();
+            };
+        }
+
         #region SelectionManipulation
         private int PrevSelected { get; set; }
         private void PushSelected()
@@ -61,24 +79,31 @@ namespace ArrayPlayground.ViewModels
             PrevSelected = SelectedIndex;
             SelectedIndex = -1;
         }
-        private void PopSelected()
+        private int PopSelected(int? overrideSelection)
         {
-            SelectedIndex = PrevSelected;
+            var prev = (overrideSelection.HasValue) ? overrideSelection.Value : PrevSelected;
             PrevSelected = -1;
+            return prev;
         }
 
-        private void DoSafeSelected(Action DoSet)
+        //Need to know, whether it is possible to do that more elegant, bc 
+        //It looks good with delegate, but the thing with losing SelectedIndex is rather 
+        //Unpredictable
+
+        /// <summary>
+        /// Push SelectedIndex at the beginning and pop it when Action is done, ensures that index will coreectly be displayed in the UI
+        /// Note: inside Action SelectedIndex is -1 always.
+        /// 
+        /// </summary>
+        /// <param name="DoSet">Action to invoke</param>
+        /// <param name="nextSelection">Next selection to set, if not specified, the pushed index will be used</param>
+        private void DoSafeSelected(Action DoSet, int? nextSelection = null)
         {
             PushSelected();
             DoSet?.Invoke();
-            PopSelected();
+            SelectedIndex = PopSelected(nextSelection);
         }
         #endregion
-
-        public MainPageViewModel()
-        {
-            PrevSelected = -1;    
-        }
 
         #region Adding
         public void AddBack()
@@ -86,7 +111,7 @@ namespace ArrayPlayground.ViewModels
             DoSafeSelected( delegate
             {
                 Items.Add(new ArrayItem());
-            });
+            }, LastIndex + 1);
         }
 
         public void AddFront()
@@ -94,36 +119,104 @@ namespace ArrayPlayground.ViewModels
             DoSafeSelected(delegate
             {
                 Items.Insert(0, new ArrayItem());
-            });
+            }, 0);
+        }
+
+        //I think we handle brim cases both
+        public void AddAfter()
+        {
+            if (SelectedIndex == Items.Count - 1)
+            {
+                AddBack();
+            }
+            else
+            {
+                DoSafeSelected( delegate
+                {
+                    Items.Insert(PrevSelected+1, new ArrayItem());
+                }, SelectedIndex + 1); 
+            }
+        }
+
+        public void AddBefore()
+        {
+            if (SelectedIndex == 0)
+            {
+                AddFront();
+            }
+            else
+            {
+                DoSafeSelected(delegate
+                {
+                    Items.Insert(PrevSelected - 1, new ArrayItem());
+                }, SelectedIndex);
+            }
         }
         #endregion
 
-        public void Shuffle()
+        #region Removing
+        private bool OneItemLeft()
         {
-            ArraySource.Instance.Shuffle();
-            Items = ArraySource.Instance.Items;
+            return Items.Count == 1;
         }
 
-        public void Nexty()
+        private DelegateCommand _removeSelectedCommand = null;
+        public DelegateCommand RemoveSelectedCommand
         {
-            if (SelectedIndex != (Items.Count - 1) )
+            get
             {
-                SelectedIndex++;
+                return _removeSelectedCommand ??
+                    (_removeSelectedCommand = new DelegateCommand(delegate
+                        {
+                            RemoveSelected();
+                        },() => !OneItemLeft())
+                    );
             }
-
-            else
+        }
+        private void RemoveSelected()
+        {
+            if (Items.Count > 1)
             {
-                Items.Add(new ArrayItem());
+                DoSafeSelected(delegate
+                {
+                    Items.RemoveAt(PrevSelected);
+                }, 
+                
+                (SelectedIndex == LastIndex) ? SelectedIndex-1 : SelectedIndex);
             }
         }
 
-        public void Prevy()
+        public void ClearAll()
         {
-            if (SelectedIndex != 0)
+            foreach (var item in Items)
             {
-                SelectedIndex--;
+                item.Value = 0;
             }
         }
+
+        private DelegateCommand _removeAllCommand = null;
+        public DelegateCommand RemoveAllCommand
+        {
+            get
+            {
+                return _removeAllCommand ??
+                    (_removeAllCommand = new DelegateCommand(delegate
+                        {
+                            RemoveAll();
+                        }, () => !OneItemLeft())
+                    );
+            }
+        }
+
+        public void RemoveAll()
+        {
+            DoSafeSelected(delegate
+            {
+                Items.Clear();
+                AddBack();
+            }, 0);
+        }
+        #endregion
 
         public override async Task OnNavigatedToAsync(object parameter, NavigationMode mode, IDictionary<string, object> suspensionState)
         {
