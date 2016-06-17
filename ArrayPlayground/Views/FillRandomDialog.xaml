@@ -4,18 +4,25 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:ArrayPlayground.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:vm="using:ArrayPlayground.ViewModels" 
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Зполнить случайно ..."
+    Title="Заполнить случайно ..."
     PrimaryButtonText="Заполнить"
     SecondaryButtonText="Отмена"
-    PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
-    SecondaryButtonClick="ContentDialog_SecondaryButtonClick">
+    PrimaryButtonCommand="{x:Bind ViewModel.FillItemsCommandAsync}"
+    VerticalAlignment="Top" HorizontalAlignment="Center" Padding="30 10">
 
-    <StackPanel Margin="10 20">
-        <TextBox x:Name="ElementsRequiredTextBox" MaxLength="5" InputScope="Digits"
-                 Header="Количество элементов"/>
-        <ToggleSwitch x:Name="UniqueOnlySwitch" OnContent="Только уникальные" OffContent="С повторениями"/>
-        <ToggleSwitch x:Name="SortedSwitch" OnContent="Упорядочено" OffContent="Неупорядочено"/>
+    <ContentDialog.Resources>
+        <vm:FillRandomViewModel x:Name="ViewModel"/>
+    </ContentDialog.Resources>
+    
+    <StackPanel Padding="0 20" VerticalAlignment="Top">
+        <TextBox x:Name="ItemsRequiredTextBox" MaxLength="5" InputScope="Digits"
+                 Header="Количество элементов" Text="{x:Bind ViewModel.ItemsRequired, Mode=TwoWay}" Margin="0 0 0 20"/>
+        <ToggleSwitch x:Name="UniqueOnlySwitch" OnContent="Только уникальные" OffContent="С повторениями"
+                      IsOn="{x:Bind ViewModel.UniqueOnly, Mode=TwoWay}"/>
+        <ToggleSwitch x:Name="SortedSwitch" OnContent="Упорядочено" OffContent="Неупорядочено"
+                      IsOn="{x:Bind ViewModel.SortAfter, Mode=TwoWay}"/>
     </StackPanel>
 </ContentDialog>

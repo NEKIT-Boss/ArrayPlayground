@@ -6,19 +6,22 @@
       xmlns:Interactivity="using:Microsoft.Xaml.Interactivity"
       xmlns:controls="using:Template10.Controls"
       xmlns:converters="using:Template10.Converters"
+      xmlns:Converters="using:ArrayPlayground.Converters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:local="using:ArrayPlayground.Views"
       xmlns:models="using:ArrayPlayground.Models"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:vm="using:ArrayPlayground.ViewModels" mc:Ignorable="d">
 
-    <Page.DataContext>
-        <vm:MainPageViewModel x:Name="ViewModel" />
-    </Page.DataContext>
-
     <Page.Resources>
         <converters:StringFormatConverter x:Key="SummaryConverter"/>
+
+        <!-- Make an appropriate converter, with convert back support, to ensure this two way binding thing,
+        Then that will be the time, to start dependency injection -->
+        <Converters:IntToSearchMethod x:Key="IntToSearchMethodConverter"/>
+        
         <converters:ValueWhenConverter x:Key="LastIndexToBoolean">
+
             <converters:ValueWhenConverter.When>
                 <x:Int32>1</x:Int32>
             </converters:ValueWhenConverter.When>
@@ -72,7 +75,8 @@
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>-->
 
-        <Pivot Title="Массив PlAYGROUND" Background="{StaticResource AppBarBackgroundThemeBrush}">
+        <Pivot Title="Массив PlAYGROUND" Background="{StaticResource AppBarBackgroundThemeBrush}"
+               SelectionChanged="PivotSelectionChanged">
             <Pivot.TitleTemplate>
                 <DataTemplate>
                     <TextBlock Style="{StaticResource HeaderTextBlockStyle}" Text="{Binding}"/>
@@ -93,134 +97,281 @@
             </Pivot.Resources>
 
             <PivotItem Header="Ввод данных">
-                <RelativePanel>
-                    <Rectangle x:Name="InputBelt" 
-                               RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignTopWithPanel="True"
-                               Style="{StaticResource AppHeaderBeltRectangleStyle}"
-                               />
-                    <ScrollViewer Margin="10 5" VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Auto"
-                                  RelativePanel.Below="InputBelt" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignBottomWithPanel="True"
-                                  Padding="0 20 15 0">
-                        <RelativePanel>
-                            <TextBlock x:Name="ArrayTitle"
-                                       Text="Массив" Style="{StaticResource TitleTextBlockStyle}"
-                                       RelativePanel.AlignTopWithPanel="True"/>
+                <!-- I don't know, maybe at some point we can set Pivot as MainFrame, and use OnNavigatedTo, but I'm not sure
+                    Still we will use that page wrapper -->
+                <Page x:Name="InputPage">
+                    <Page.DataContext>
+                        <vm:InputViewModel x:Name="InputViewModel"/>
+                    </Page.DataContext>
 
-                            <ListBox x:Name="AddingItems" TabNavigation="Local"
-                                     ItemsSource="{x:Bind ViewModel.Items, Mode=OneWay}" SelectedIndex="{x:Bind ViewModel.SelectedIndex, Mode=TwoWay}"
-                                     Margin="0" Background="Transparent"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled"
-                                     RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.Below="ArrayTitle"
-                                     SelectionChanged="AddingItems_SelectionChanged" KeyDown="AddingItems_KeyDown">
-                                
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel HorizontalAlignment="Left"
-                                                                Orientation="Horizontal" AreScrollSnapPointsRegular="True" VirtualizationMode="Recycling"/>
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
+                    <RelativePanel>
+                        <Rectangle x:Name="InputBelt" 
+                                   RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignTopWithPanel="True"
+                                   Style="{StaticResource AppHeaderBeltRectangleStyle}"
+                                   />
+                        <ScrollViewer Margin="10 5" VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Auto"
+                                      RelativePanel.Below="InputBelt" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignBottomWithPanel="True"
+                                      Padding="0 20 15 0">
+                            <RelativePanel>
+                                <TextBlock x:Name="ArrayTitle"
+                                           Text="Массив" Style="{StaticResource TitleTextBlockStyle}"
+                                           RelativePanel.AlignTopWithPanel="True"/>
 
-                                <ListBox.ItemContainerStyle>
-                                    <Style TargetType="ListBoxItem">
-                                        <Setter Property="IsTabStop" Value="False"/>
-                                        <Setter Property="Padding" Value="0"/>
-                                        <Setter Property="Margin" Value="0 20 20 20"/>
-                                    </Style>
-                                </ListBox.ItemContainerStyle>
-                                
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:ArrayItem">
-                                        <!-- Unsolved issue, need to change selection when selecting another textbox
-                                             IDK what solution to tkae mb tag, mb code behind, actually code behind makes much more sense
-                                             When get familiar will change that to behavior -->
-                                        <TextBox x:Name="EditBox" Text="{x:Bind Value, Mode=TwoWay}" Style="{StaticResource InputTextBox}"
-                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                 GotFocus="EditBox_GotFocus"
-                                                 >
-                                        </TextBox>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                                <ListBox x:Name="AddingItems" TabNavigation="Local"
+                                         ItemsSource="{x:Bind InputViewModel.Items, Mode=OneWay}" SelectedIndex="{x:Bind InputViewModel.SelectedIndex, Mode=TwoWay}"
+                                         Margin="0" Background="Transparent"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled"
+                                         RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.Below="ArrayTitle"
+                                         SelectionChanged="AddingItems_SelectionChanged" KeyDown="AddingItems_KeyDown">
 
-                            <Button RelativePanel.Above="AddingItems" RelativePanel.AlignRightWith="AddingItems">
-                                <StackPanel Orientation="Horizontal">
-                                    <SymbolIcon Symbol="Sort"/>
-                                    <TextBlock Text="Отсортировать" Margin="5 0 0 0"/>
-                                </StackPanel>
-                            </Button>
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel HorizontalAlignment="Left"
+                                                                    Orientation="Horizontal" AreScrollSnapPointsRegular="True" VirtualizationMode="Recycling"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
 
-                            <VariableSizedWrapGrid RelativePanel.Below="AddingItems" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" Orientation="Horizontal" ItemHeight="{Binding ActualHeight, ElementName=AddingColumn, Mode=OneTime}" Margin="0 40 0 0">
-                                <StackPanel Style="{StaticResource ButtonsStackStyle}">
-                                    <StackPanel.Resources>
-                                        <Style  TargetType="TextBlock" BasedOn="{StaticResource SummaryTextBlockStyle}"/>
-                                    </StackPanel.Resources>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="IsTabStop" Value="False"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0 20 20 20"/>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
 
-                                    <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
-                                        Заполнено
-                                    </ListViewHeaderItem>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:ArrayItem">
+                                            <!-- Unsolved issue, need to change selection when selecting another textbox
+                                                 IDK what solution to tkae mb tag, mb code behind, actually code behind makes much more sense
+                                                 When get familiar will change that to behavior -->
+                                            <TextBox x:Name="EditBox" Text="{x:Bind Value, Mode=TwoWay}" Style="{StaticResource InputTextBox}"
+                                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center" InputScope="Digits"
+                                                     GotFocus="EditBox_GotFocus"
+                                                     >
+                                            </TextBox>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
 
-                                    <TextBlock Text="{x:Bind ViewModel.Items.Count, Mode=OneWay, Converter={StaticResource SummaryConverter}, ConverterParameter=Заполнено элементов: \{0\}}"/>
-                                    <TextBlock Text="{x:Bind ViewModel.SelectedIndex, Mode=OneWay, Converter={StaticResource SummaryConverter}, ConverterParameter=Выбранный элемент: \{0\}}"/>
+                                <Button RelativePanel.Above="AddingItems" RelativePanel.AlignRightWith="AddingItems">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Отсортированы: "/>
-                                        <SymbolIcon Symbol="Accept" VerticalAlignment="Top" Foreground="Green" Margin="10 0 0 0">
-                                            <SymbolIcon.RenderTransform>
-                                                <ScaleTransform ScaleX="1.1" ScaleY="1.1"/>
-
-                                            </SymbolIcon.RenderTransform>
-                                        </SymbolIcon>
+                                        <SymbolIcon Symbol="Sort"/>
+                                        <TextBlock Text="Отсортировать" Margin="5 0 0 0"/>
                                     </StackPanel>
-                                </StackPanel>
+                                </Button>
 
-                                <StackPanel x:Name="AddingColumn" Style="{StaticResource ButtonsStackStyle}">
-                                    <StackPanel.Resources>
-                                        <Style  TargetType="Button" BasedOn="{StaticResource HubButtonStyle}"/>
-                                    </StackPanel.Resources>
+                                <VariableSizedWrapGrid RelativePanel.Below="AddingItems" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" Orientation="Horizontal" ItemHeight="{Binding ActualHeight, ElementName=AddingColumn, Mode=OneTime}" Margin="0 40 0 0">
+                                    <StackPanel Style="{StaticResource ButtonsStackStyle}">
+                                        <StackPanel.Resources>
+                                            <Style  TargetType="TextBlock" BasedOn="{StaticResource SummaryTextBlockStyle}"/>
+                                        </StackPanel.Resources>
 
-                                    <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
-                                        Добавить
-                                    </ListViewHeaderItem>
+                                        <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
+                                            Заполнено
+                                        </ListViewHeaderItem>
 
-                                    <Button Content="В конец" Click="{x:Bind ViewModel.AddBack}"/>
-                                    <Button Content="В начало" Click="{x:Bind ViewModel.AddFront}"/>
-                                    <Button Content="Перед выбранным" Click="{x:Bind ViewModel.AddBefore}"/>
-                                    <Button Content="После выбранного" Click="{x:Bind ViewModel.AddAfter}"/>
-                                </StackPanel>
+                                        <TextBlock Text="{x:Bind InputViewModel.Items.Count, Mode=OneWay, Converter={StaticResource SummaryConverter}, ConverterParameter=Заполнено элементов: \{0\}}"/>
+                                        <TextBlock Text="{x:Bind InputViewModel.SelectedIndex, Mode=OneWay, Converter={StaticResource SummaryConverter}, ConverterParameter=Выбранный элемент: \{0\}}"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Отсортированы: "/>
+                                            <SymbolIcon Symbol="Accept" VerticalAlignment="Top" Foreground="Green" Margin="10 0 0 0">
+                                                <SymbolIcon.RenderTransform>
+                                                    <ScaleTransform ScaleX="1.1" ScaleY="1.1"/>
 
-                                <StackPanel Style="{StaticResource ButtonsStackStyle}">
-                                    <StackPanel.Resources>
-                                        <Style  TargetType="Button" BasedOn="{StaticResource HubButtonStyle}"/>
-                                    </StackPanel.Resources>
+                                                </SymbolIcon.RenderTransform>
+                                            </SymbolIcon>
+                                        </StackPanel>
+                                    </StackPanel>
 
-                                    <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
-                                        Удалить
-                                    </ListViewHeaderItem>
+                                    <StackPanel x:Name="AddingColumn" Style="{StaticResource ButtonsStackStyle}">
+                                        <StackPanel.Resources>
+                                            <Style  TargetType="Button" BasedOn="{StaticResource HubButtonStyle}"/>
+                                        </StackPanel.Resources>
 
-                                    <Button Content="Выбранный" Command="{x:Bind ViewModel.RemoveSelectedCommand}"/>
-                                    <Button Content="Очистить все" Click="{x:Bind ViewModel.ClearAll}"/>
-                                    <Button Content="Удалить все" Command="{x:Bind ViewModel.RemoveAllCommand}"/>
-                                </StackPanel>
+                                        <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
+                                            Добавить
+                                        </ListViewHeaderItem>
 
-                                <StackPanel Style="{StaticResource ButtonsStackStyle}">
-                                    <StackPanel.Resources>
-                                        <Style  TargetType="Button" BasedOn="{StaticResource HubButtonStyle}"/>
-                                    </StackPanel.Resources>
+                                        <Button Content="В конец" Click="{x:Bind InputViewModel.AddBack}"/>
+                                        <Button Content="В начало" Click="{x:Bind InputViewModel.AddFront}"/>
+                                        <Button Content="Перед выбранным" Click="{x:Bind InputViewModel.AddBefore}"/>
+                                        <Button Content="После выбранного" Click="{x:Bind InputViewModel.AddAfter}"/>
+                                    </StackPanel>
 
-                                    <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
-                                        Заполнить
-                                    </ListViewHeaderItem>
+                                    <StackPanel Style="{StaticResource ButtonsStackStyle}">
+                                        <StackPanel.Resources>
+                                            <Style  TargetType="Button" BasedOn="{StaticResource HubButtonStyle}"/>
+                                        </StackPanel.Resources>
 
-                                    <Button Content="Из файла..."/>
-                                    <Button Content="Случайно..."/>
-                                </StackPanel>
-                            </VariableSizedWrapGrid>
-                        </RelativePanel>
-                    </ScrollViewer>
-                </RelativePanel>
+                                        <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
+                                            Удалить
+                                        </ListViewHeaderItem>
+
+                                        <Button Content="Выбранный" Command="{x:Bind InputViewModel.RemoveSelectedCommand}"/>
+                                        <Button Content="Очистить все" Click="{x:Bind InputViewModel.ClearAll}"/>
+                                        <Button Content="Удалить все" Command="{x:Bind InputViewModel.RemoveAllCommand}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Style="{StaticResource ButtonsStackStyle}">
+                                        <StackPanel.Resources>
+                                            <Style  TargetType="Button" BasedOn="{StaticResource HubButtonStyle}"/>
+                                        </StackPanel.Resources>
+
+                                        <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
+                                            Заполнить
+                                        </ListViewHeaderItem>
+
+                                        <Button Content="Из файла..."/>
+                                        <Button Content="Случайно..." Click="Button_Click"/>
+                                    </StackPanel>
+                                </VariableSizedWrapGrid>
+                            </RelativePanel>
+                        </ScrollViewer>
+                    </RelativePanel>
+                </Page>
             </PivotItem>
 
             <PivotItem Header="Поиск" VerticalContentAlignment="Stretch">
-                
+                <Page x:Name="SearchPage">
+                    <Page.DataContext>
+                        <vm:SearchViewModel x:Name="SearchViewModel"/>
+                    </Page.DataContext>
+
+                    <RelativePanel>
+                        <Rectangle x:Name="SearchBelt" 
+                        RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignTopWithPanel="True"
+                        Style="{StaticResource AppHeaderBeltRectangleStyle}"
+                        />
+
+                        <ScrollViewer Margin="10 5" VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Auto"
+                            RelativePanel.Below="SearchBelt" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignBottomWithPanel="True"
+                            Padding="0 20 15 0">
+                            <RelativePanel>
+                                <TextBlock x:Name="SearchTitle"
+                                    Text="Массив" Style="{StaticResource TitleTextBlockStyle}"
+                                    RelativePanel.AlignTopWithPanel="True"/>
+
+                                <ListBox x:Name="SearchingItems" TabNavigation="Local"
+                                    ItemsSource="{x:Bind SearchViewModel.Items, Mode=OneWay}" SelectedIndex="{x:Bind SearchViewModel.FoundIndex, Mode=OneWay}"
+                                    Margin="0" Background="Transparent"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled"
+                                    RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.Below="SearchTitle"
+                                    SelectionChanged="SearchingItems_SelectionChanged">
+
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel HorizontalAlignment="Left"
+                                                  Orientation="Horizontal" AreScrollSnapPointsRegular="True" VirtualizationMode="Recycling"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="IsTabStop" Value="False"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0 20 20 20"/>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:ArrayItem">
+                                            <!-- Unsolved issue, need to change selection when selecting another textbox
+                                        IDK what solution to tkae mb tag, mb code behind, actually code behind makes much more sense
+                                        When get familiar will change that to behavior -->
+                                            <TextBlock Text="{x:Bind Value, Mode=OneWay}" Style="{StaticResource InputTextBlock}" TextAlignment="Center"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                
+                                <StackPanel x:Name="SearchArea"
+                                            RelativePanel.Below="SearchingItems" RelativePanel.AlignLeftWithPanel="True"
+                                            Margin="50 70 0 0">
+                                    <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}">
+                                        Параметры
+                                    </ListViewHeaderItem>
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Text="{x:Bind SearchViewModel.SearchTarget, Mode=TwoWay, FallbackValue=0}"
+                                                 MaxLength="5" InputScope="Digits" PlaceholderText="Искать..."
+                                                 Margin="0 0 20 0">
+                                            <TextBox.Header>
+                                                <TextBlock Text="Элемент для поиска:" Style="{StaticResource SearchPageBodyText}" />
+                                            </TextBox.Header>
+                                        </TextBox>
+
+                                        <ComboBox SelectedIndex="{x:Bind SearchViewModel.SelectedSearchMethod, Mode=TwoWay, Converter={StaticResource IntToSearchMethodConverter}}">
+                                            <ComboBox.Header>
+                                                <TextBlock Text="Алгоритм поиска:" Style="{StaticResource SearchPageBodyText}" />
+                                            </ComboBox.Header>
+
+                                            <ComboBoxItem >Бинарный</ComboBoxItem>
+                                            <ComboBoxItem >Прямой перебор</ComboBoxItem>
+                                            <ComboBoxItem >Обратный Перебор</ComboBoxItem>
+                                        </ComboBox>
+                                        
+                                    </StackPanel>
+                                    <Button HorizontalAlignment="Stretch"
+                                            Margin="0 30 0 0" HorizontalContentAlignment="Left">
+                                        <Button.Content>
+                                            <StackPanel Orientation="Horizontal">
+                                                <SymbolIcon Symbol="Find" Style="{StaticResource StatsSymbol}"/>
+                                                <TextBlock Style="{StaticResource SearchPageBodyText}">Искать</TextBlock>
+                                            </StackPanel>
+                                        </Button.Content>
+                                    </Button>
+
+                                </StackPanel>
+
+                                <StackPanel x:Name="StatsArea"
+                                            RelativePanel.Below="SearchingItems" RelativePanel.AlignRightWithPanel="True"
+                                            Margin="0 70 50 0">
+                                    <StackPanel.Resources>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource SearchPageBodyText}"/>
+                                    </StackPanel.Resources>
+
+                                    <ListViewHeaderItem Style="{StaticResource ButtonsStackHeaderStyle}" HorizontalContentAlignment="Right">
+                                        Статистика
+                                    </ListViewHeaderItem>
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <SymbolIcon Symbol="Find" Style="{StaticResource StatsSymbol}"/>
+                                        <TextBlock Text="Поисков произведено: 13"/>
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <SymbolIcon Symbol="Accept" Style="{StaticResource StatsSymbol}"
+                                                        Foreground="Green"/>
+                                            <TextBlock Text="Найдено: 3"/>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <SymbolIcon Symbol="Cancel" Style="{StaticResource StatsSymbol}"
+                                                        Foreground="Red"/>
+                                            <TextBlock Text="Не найдено: 9"/>
+                                        </StackPanel>
+
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                                        <SymbolIcon Symbol="Clock" Style="{StaticResource StatsSymbol}"/>
+                                        <TextBlock Text="Самый длительный поиск: 5.232 с"/>
+                                    </StackPanel>
+
+                                    <Button Margin="0 30 0 0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                                        <Button.Content>
+                                            <StackPanel Orientation="Horizontal">
+                                                <SymbolIcon Symbol="Refresh" Style="{StaticResource StatsSymbol}"/>
+                                                <TextBlock>Сбросить</TextBlock>
+                                            </StackPanel>
+                                        </Button.Content>
+                                    </Button>
+                                </StackPanel>
+                            </RelativePanel>
+
+                        </ScrollViewer>
+                    </RelativePanel>
+                </Page>
             </PivotItem>
 
             <PivotItem Header="Построить дерево">

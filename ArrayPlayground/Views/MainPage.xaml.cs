@@ -42,7 +42,7 @@ namespace ArrayPlayground.Views
         private void AddingItems_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
-            if (ViewModel.SelectedIndex != -1)
+            if (InputViewModel.SelectedIndex != -1)
             {
                 AddingItems.UpdateLayout();
                 AddingItems.ScrollIntoView(e.AddedItems[0]);
@@ -52,16 +52,15 @@ namespace ArrayPlayground.Views
         private void AddingItems_KeyDown(object sender, KeyRoutedEventArgs e)
         {
             bool shiftPressed = CoreWindow.GetForCurrentThread()
-                .GetKeyState(VirtualKey.Shift)
-                .HasFlag(CoreVirtualKeyStates.Down);
+                .GetKeyState(VirtualKey.Shift) == CoreVirtualKeyStates.Down;
 
             if (e.Key == VirtualKey.Tab
                 && shiftPressed )
             {
-                if (ViewModel.SelectedIndex == 0)
+                if (InputViewModel.SelectedIndex == 0)
                 {
                     e.Handled = true;
-                    ViewModel.AddFront();
+                    InputViewModel.AddFront();
                 }
             }
             else
@@ -69,12 +68,42 @@ namespace ArrayPlayground.Views
 
                 if (e.Key == VirtualKey.Tab)
                 {
-                    if (ViewModel.SelectedIndex == ViewModel.LastIndex)
+                    if (InputViewModel.SelectedIndex == InputViewModel.LastIndex)
                     {
                         e.Handled = true;
-                        ViewModel.AddBack();
+                        InputViewModel.AddBack();
                     }
                 }
+            }
+        }
+
+        private async void Button_Click(object sender, RoutedEventArgs e)
+        {
+            FillRandomDialog dialog = new FillRandomDialog();
+            dialog.InitialItemsCount = InputViewModel.Items.Count;
+
+            int prevSelected = InputViewModel.SelectedIndex;
+            InputViewModel.SelectedIndex = -1;
+
+            var result = await dialog.ShowAsync();
+
+            if (result != ContentDialogResult.Primary)
+            {
+                InputViewModel.SelectedIndex = prevSelected;
+            }
+        }
+
+        private void PivotSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            InputViewModel.SelectedIndex = -1;
+            SearchViewModel.Reset();
+        }
+
+        private void SearchingItems_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if ((sender as ListBox).SelectedIndex != SearchViewModel.FoundIndex)
+            {
+                (sender as ListBox).SelectedIndex = SearchViewModel.FoundIndex;
             }
         }
     }
